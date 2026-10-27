@@ -108,6 +108,18 @@ Make sure `users.json` contains the authorized test accounts and `tokens.json` c
 From the project directory, run:
 
 ```bash
+# 1. Recharge Agent balances from SYSTEM
+k6 run recharge_agents.js
+
+# 2. Run setup_auth to generate fresh JWT tokens
+k6 run setup_auth.js
+
+# 3. Paste the generated JSON into tokens.json (or ensure fetch_tokens.js passes 6/6)
+
+# 4. Verify tokens are working (should return 200/201 instead of 403)
+k6 run check_status.js
+
+# 5. Run main load test
 k6 run script.js
 ```
 
