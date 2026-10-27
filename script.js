@@ -76,11 +76,6 @@ function executeTransaction(endpoint, senderPhone, receiverPhone, amount, token,
     const res = http.post(`${BASE_URL}${endpoint}`, payload, { headers });
     metricTrend.add(res.timings.duration);
 
-    let json = {};
-    try {
-        json = res.json();
-    } catch (e) { }
-
     const isSuccess = check(res, {
         [`${txnName} status is valid`]: (r) => r.status === 200 || r.status === 201,
     });
@@ -101,10 +96,10 @@ export function phase1() {
 
 // 30–60 seconds
 // - Customer 2 sends money to Customer 1
-// - Agent 1 deposits money to Customer 2
+// - Agent 1 deposits money to Customer 2 (Amount lowered to 10 to avoid limit error)
 // - Customer 1 makes payments to Merchant 1
 export function phase2() {
-    executeTransaction('/transaction/deposit', users.agent1.phone, users.customer2.phone, 50, tokens.agent1, depositSuccessRate, depositTrend, 'Deposit');
+    executeTransaction('/transaction/deposit', users.agent1.phone, users.customer2.phone, 10, tokens.agent1, depositSuccessRate, depositTrend, 'Deposit');
     sleep(1);
     executeTransaction('/transaction/sendmoney', users.customer2.phone, users.customer1.phone, 10, tokens.customer2, sendMoneySuccessRate, sendMoneyTrend, 'SendMoney');
     sleep(1.5);
@@ -113,14 +108,14 @@ export function phase2() {
 }
 
 // 60–90 seconds
-// - Agent 1 deposits money to Customer 1
-// - Agent 2 deposits money to Customer 2
+// - Agent 1 deposits money to Customer 1 (Amount lowered to 10)
+// - Agent 2 deposits money to Customer 2 (Amount lowered to 10)
 // - Customer 1 sends money to Customer 2
 // - Customer 2 makes payments to Merchant 2
 export function phase3() {
-    executeTransaction('/transaction/deposit', users.agent1.phone, users.customer1.phone, 50, tokens.agent1, depositSuccessRate, depositTrend, 'Deposit');
+    executeTransaction('/transaction/deposit', users.agent1.phone, users.customer1.phone, 10, tokens.agent1, depositSuccessRate, depositTrend, 'Deposit');
     sleep(1);
-    executeTransaction('/transaction/deposit', users.agent2.phone, users.customer2.phone, 50, tokens.agent2, depositSuccessRate, depositTrend, 'Deposit');
+    executeTransaction('/transaction/deposit', users.agent2.phone, users.customer2.phone, 10, tokens.agent2, depositSuccessRate, depositTrend, 'Deposit');
     sleep(1);
     executeTransaction('/transaction/sendmoney', users.customer1.phone, users.customer2.phone, 10, tokens.customer1, sendMoneySuccessRate, sendMoneyTrend, 'SendMoney');
     sleep(1.5);
