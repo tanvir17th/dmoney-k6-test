@@ -1,0 +1,8 @@
+{
+  "agent1": { "phone": "01711000001", "password": "1234" },
+  "agent2": { "phone": "01711000002", "password": "1234" },
+  "customer1": { "phone": "01700000001", "password": "1234" },
+  "customer2": { "phone": "01700000002", "password": "1234" },
+  "merchant1": { "phone": "01300000001", "password": "1234" },
+  "merchant2": { "phone": "01300000002", "password": "1234" }
+}
