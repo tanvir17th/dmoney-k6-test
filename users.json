@@ -1,8 +1,32 @@
 {
-  "agent1": { "phone": "01711000001", "password": "1234" },
-  "agent2": { "phone": "01711000002", "password": "1234" },
-  "customer1": { "phone": "01700000001", "password": "1234" },
-  "customer2": { "phone": "01700000002", "password": "1234" },
-  "merchant1": { "phone": "01300000001", "password": "1234" },
-  "merchant2": { "phone": "01300000002", "password": "1234" }
+    "agent1": {
+        "email": "agent1_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01717464816"
+    },
+    "agent2": {
+        "email": "agent2_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01727464816"
+    },
+    "customer1": {
+        "email": "customer1_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01817464816"
+    },
+    "customer2": {
+        "email": "customer2_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01827464816"
+    },
+    "merchant1": {
+        "email": "merchant1_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01917464816"
+    },
+    "merchant2": {
+        "email": "merchant2_7464816@gmail.com",
+        "password": "Password@123",
+        "phone": "01927464816"
+    }
 }

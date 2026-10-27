@@ -1,29 +1,28 @@
 import http from 'k6/http';
-import { check } from 'k6';
 
 const BASE_URL = 'https://dmoney.roadtocareer.net';
-const SECRET_KEY = 'ROADTOSDET';
+const users = JSON.parse(open('./users.json'));
+const tokens = JSON.parse(open('./tokens.json'));
 
-export function depositBalance(fromAccount, toAccount, amount, token) {
-  const payload = JSON.stringify({
-    from_account: fromAccount,
-    to_account: toAccount,
-    amount: amount,
-  });
+export const options = { vus: 1, iterations: 1 };
 
-  const params = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-AUTH-SECRET-KEY': SECRET_KEY,
-    },
-  };
+export default function () {
+    const agentHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokens.agent1}`,
+        'X-AUTH-SECRET-KEY': 'ROADTOSDET',
+    };
 
-  const res = http.post(`${BASE_URL}/transaction/deposit`, payload, params);
-  
-  check(res, {
-    'Deposit success': (r) => r.status === 200 || r.status === 201,
-  });
-
-  return res;
+    for (const cust of [users.customer1, users.customer2]) {
+        const res = http.post(
+            `${BASE_URL}/transaction/deposit`,
+            JSON.stringify({
+                from_account: users.agent1.phone,
+                to_account: cust.phone,
+                amount: 2000,
+            }),
+            { headers: agentHeaders }
+        );
+        console.log(`Recharged ${cust.phone}: Status ${res.status} -> ${res.body}`);
+    }
 }

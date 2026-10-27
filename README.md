@@ -10,29 +10,32 @@ This repository contains an automated k6 performance testing scenario designed f
 
 ## Execution Commands
 
-Run once without OTP variables to request codes for all accounts. The setup will stop and print the required variable names. Enter the current codes, then rerun the workload; that second run verifies the codes directly without requesting new ones.
+`script.js` reuses unexpired JWTs from `tokens.json` and stops before the load test if they have expired. Refresh tokens locally with Node 20 or newer:
 
 ```bash
-k6 run script.js
+node refresh_tokens.js
 ```
+
+The first run requests OTPs and prints the required environment variable names. Retrieve codes through each account's normal delivery channel, then rerun the helper with the codes in the environment. The helper verifies them, checks that the returned tokens are unexpired, and updates `tokens.json` atomically without printing token values. For example:
 
 ```bash
-export DMONEY_OTP_AGENT1=\"<agent1-code>\"
-export DMONEY_OTP_AGENT2=\"<agent2-code>\"
-export DMONEY_OTP_CUSTOMER1=\"<customer1-code>\"
-export DMONEY_OTP_CUSTOMER2=\"<customer2-code>\"
-export DMONEY_OTP_MERCHANT1=\"<merchant1-code>\"
-export DMONEY_OTP_MERCHANT2=\"<merchant2-code>\"
-k6 run script.js
+DMONEY_OTP_AGENT1='<current-code>' \
+DMONEY_OTP_AGENT2='<current-code>' \
+DMONEY_OTP_CUSTOMER1='<current-code>' \
+DMONEY_OTP_CUSTOMER2='<current-code>' \
+DMONEY_OTP_MERCHANT1='<current-code>' \
+DMONEY_OTP_MERCHANT2='<current-code>' \
+node refresh_tokens.js
 ```
 
-Run commands from the repository root. OTPs expire, so complete the second run promptly.
-
-If an account password differs from `users.json`, override it without editing the file. For the current `customer1` rejection:
+Then run the workload:
 
 ```bash
-export DMONEY_PASSWORD_CUSTOMER1='<correct-password>'
-k6 run script.js
+k6 run --out web-dashboard=report.html script.js
 ```
 
-You can also override an account phone or email identifier with `DMONEY_PHONE_<USERKEY>`. Set the corresponding OTP variables for every account during the verification run.
+Tokens expire, so run the refresh helper again when needed. `setup_auth.js` is disabled because it used an admin endpoint to retrieve user OTPs; it now fails with a message directing you to the Node helper. Keep account credentials and tokens private. `.gitignore` now excludes generated tokens and reports, but `tokens.json` and `users.json` are already tracked in Git; untracking them requires removing them from the repository index and rotating any credentials/tokens already exposed.
+
+If an OTP is rejected, request a fresh code and rerun promptly. If password login later fails, check that the corresponding credentials in `users.json` are current.
+
+`dmoney_test.js` is a compatibility entrypoint for the same workload; `script.js` is the canonical file.

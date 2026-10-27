@@ -1,40 +1,28 @@
 import http from 'k6/http';
-import { check } from 'k6';
 
 const BASE_URL = 'https://dmoney.roadtocareer.net';
-const SECRET_KEY = 'ROADTOSDET';
+const users = JSON.parse(open('./users.json'));
 
-export function fetchTokens(users) {
-  const tokens = {};
+export const options = { vus: 1, iterations: 1 };
 
-  for (const [key, user] of Object.entries(users)) {
-    const payload = JSON.stringify({
-      phone_number: user.phone,
-      password: user.password,
-    });
-
-    const params = {
-      headers: {
+export default function () {
+    const tokens = {};
+    const headers = {
         'Content-Type': 'application/json',
-        'X-AUTH-SECRET-KEY': SECRET_KEY,
-      },
+        'X-AUTH-SECRET-KEY': 'ROADTOSDET',
     };
 
-    const res = http.post(`${BASE_URL}/user/login`, payload, params);
-
-    check(res, {
-      [`${key} login status 200`]: (r) => r.status === 200,
-    });
-
-    if (res.status === 200) {
-      try {
+    for (const [role, cred] of Object.entries(users)) {
+        const res = http.post(
+            `${BASE_URL}/user/login`,
+            JSON.stringify({ email: cred.email, password: cred.password }),
+            { headers }
+        );
         const body = res.json();
-        tokens[key] = body.token || (body.data && body.data.token);
-      } catch (e) {
-        console.error(`Token parse error for ${key}`);
-      }
+        tokens[role] = body.token || (body.data && body.data.token) || '';
+        console.log(`Token fetched for ${role}: Status ${res.status}`);
     }
-  }
 
-  return tokens;
+    console.log('--- COPY THE JSON BELOW INTO tokens.json ---');
+    console.log(JSON.stringify(tokens, null, 2));
 }
