@@ -88,12 +88,12 @@ The load test generated **344 total HTTP requests** (172 full iteration loops) u
 
 
 ### Load Test Execution Summary
-![k6 Terminal Summary](./docs/screenshots/k6_terminal_summary.png)
+![k6 Terminal Summary](./screenshots/k6_terminal_summary.png)
 
 ### HTML Test Report
-![k6 HTML Report Overview](./docs/screenshots/k6_html_report.png)
-![k6 HTML Per-API Metrics](./docs/screenshots/k6_html_metrics.png)
-![k6 HTML Per-API Metrics](./docs/screenshots/k6_html_metrics2.png)
+![k6 HTML Report Overview](./screenshots/k6_html_report.png)
+![k6 HTML Per-API Metrics](./screenshots/k6_html_metrics.png)
+![k6 HTML Per-API Metrics](./screenshots/k6_html_metrics2.png)
 ---
 
 ## 🚀 Execution Instructions
