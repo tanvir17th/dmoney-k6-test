@@ -168,7 +168,12 @@ The run stayed within configured thresholds. Both failed checks were deposit req
 
 ## Screenshots
 
-Project screenshots are available in the [Google Drive folder](https://drive.google.com/drive/folders/1JxuV2UM3iAmteAeHTjS-Df0wi7MlKVrI?usp=sharing).
+### Load Test Execution Summary
+![k6 Terminal Summary](./docs/screenshots/k6_terminal_summary.png)
+
+### HTML Test Report
+![k6 HTML Report Overview](./docs/screenshots/k6_html_report.png)
+![k6 HTML Per-API Metrics](./docs/screenshots/k6_html_metrics.png)
 
 ## Tech Stack
 

@@ -1,2 +1,5 @@
 tokens.json
 tokens.json.tmp
+users.json
+tokens.json
+.env
