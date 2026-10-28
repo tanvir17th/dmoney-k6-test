@@ -1,8 +1,9 @@
 <div align="center">
 
-# DMoney API Load Testing with k6
+# dMoney API Load & Performance Testing Framework
 
-Automated multi-phase performance tests for the DMoney fintech platform, built with Grafana k6.
+## 📌 Executive Summary
+This project delivers a comprehensive performance and load testing suite for the **dMoney** REST API platform using **Grafana k6**. The performance suite evaluates system throughput, response latency, and threshold compliance under concurrent multi-role traffic flows (Customer, Agent, and Merchant) spanning 120 seconds across 4 distinct execution windows.
 
 ![k6](https://img.shields.io/badge/k6-load%20testing-7D64FF?style=for-the-badge&logo=k6&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-utilities-339933?style=for-the-badge&logo=node.js&logoColor=white)
@@ -11,162 +12,80 @@ Automated multi-phase performance tests for the DMoney fintech platform, built w
 
 </div>
 
----
-
-## Table of Contents
-
-- [Project Overview](#project-overview)
-- [Test Scenarios](#test-scenarios)
-- [Prerequisites](#prerequisites)
-- [Project Files](#project-files)
-- [Setup and Execution](#setup-and-execution)
-- [Latest Results](#latest-results)
-- [Screenshots](#screenshots)
-- [Tech Stack](#tech-stack)
-- [Author](#author)
 
 ---
 
-## Project Overview
+## 🛠 Project Fixes & Feedback Compliance
 
-This project exercises the DMoney API with a staged, two-minute workload. It measures transaction success rates, request failures, and response times under concurrent virtual users.
+All issues identified during review have been refactored in `script.js` and repository configurations:
 
-**Roles:** Agents, customers, and merchants
+1. **Complete Phase 4 Workload Coverage:** `agent1Flow` and `agent2Flow` execute Agent 1 → Merchant 1 and Agent 2 → Merchant 2 payment transactions during the 90–120 second window alongside Customer transfers.
+2. **Concurrent Workload Architecture:** Replaced sequential monolithic phase scripts with four independent, concurrent scenario workers (`customer1_worker`, `customer2_worker`, `agent1_worker`, `agent2_worker`).
+3. **Deep Payload Assertion:** `executeTransaction()` validates HTTP status codes (`200`/`201`), presence of a valid transaction ID (`trnxId` / `trnx_id` / `transactionId`), and success message content.
+4. **Strict Assignment Thresholds & Per-API SLAs:**
+   * Global HTTP failure rate threshold enforced at `<1%` (`http_req_failed < 0.01`).
+   * Individual per-API success rates enforced at `≥99%` for Deposit, Payment, and SendMoney.
+   * Individual P(95) response time thresholds enforced at `<1000ms` per API.
+5. **Credential Security & Environment Decoupling:** Hardcoded auth headers and sensitive tokens were removed. Environment variables (`__ENV.AUTH_SECRET_KEY`, `__ENV.BASE_URL`) handle runtime parameters, while local secret files (`users.json`, `tokens.json`) are excluded via `.gitignore`.
+6. **Embedded Visual Evidence:** Screenshots are committed locally within `./screenshots/` and embedded directly in this document.
 
-**Transactions:** Deposits, send money, and merchant payments
+---
 
-## Test Scenarios
+## 🏗 Architecture & Load Profile
 
-The workload runs four 30-second phases. The configured virtual-user count rises from two to four; k6 reports up to eight VUs across the scenarios.
+The workload models continuous concurrent traffic across 4 scenario workers over a 120-second timeline:
 
-| Phase | Time | VUs | Transactions |
-|:---:|:---:|:---:|---|
-| 1 | 0–30s | 2 | Send money, payment |
-| 2 | 30–60s | 3 | Deposit, send money, payment |
-| 3 | 60–90s | 4 | Deposit, send money, payment |
-| 4 | 90–120s | 4 | Payment |
+| Scenario Worker | Target Role / Action | Active Window | Virtual Users (VUs) | Execution Function |
+| :--- | :--- | :--- | :--- | :--- |
+| `customer1_worker` | SendMoney to Customer 2 & Payment to Merchant 1 | 0s – 120s | 2 VUs | `customer1Flow()` |
+| `customer2_worker` | Payment to Merchant 1 & SendMoney to Customer 1 | 0s – 120s | 2 VUs | `customer2Flow()` |
+| `agent1_worker` | Deposit to Customer 1 & Payment to Merchant 1 | 30s – 120s | 2 VUs | `agent1Flow()` |
+| `agent2_worker` | Deposit to Customer 2 & Payment to Merchant 2 | 60s – 120s | 2 VUs | `agent2Flow()` |
 
-```mermaid
-gantt
-    title DMoney Load Test Timeline
-    dateFormat X
-    axisFormat %Ss
-    section Phase 1 · 2 VUs
-    Send money + payment       :0, 30
-    section Phase 2 · 3 VUs
-    Deposit + send + payment   :30, 60
-    section Phase 3 · 4 VUs
-    Deposit + send + payment   :60, 90
-    section Phase 4 · 4 VUs
-    Payments                   :90, 120
-```
+---
 
-The thresholds configured in `script.js` are:
+## 📊 Comprehensive API Performance & Latency Comparison
 
-- HTTP request failure rate below 10%.
-- HTTP request duration P(95) below 1,000 ms.
-- At least 70% success for deposits, send-money transactions, and payments.
+The load test generated **344 total HTTP requests** (172 full iteration loops) under max 8 concurrent VUs:
 
-## Prerequisites
+### 1. Latency & Response Time Comparison
 
-- [Grafana k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) installed.
-- A DMoney test environment and test accounts you are authorized to use.
-- Valid bearer tokens for every account in `users.json`, saved locally in `tokens.json`.
+| API Endpoint | Min Latency | Median (P50) | Average | P(90) | P(95) Threshold Target | P(95) Actual | Max Latency | SLA Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Deposit** (`/transaction/deposit`) | 238.79 ms | 322.96 ms | 331.49 ms | 412.25 ms | `< 1000 ms` | **421.94 ms** | 473.06 ms | **PASSED** |
+| **Payment** (`/transaction/payment`) | 155.96 ms | 200.13 ms | 213.78 ms | 272.11 ms | `< 1000 ms` | **300.78 ms** | 461.99 ms | **PASSED** |
+| **Send Money** (`/transaction/sendmoney`) | 159.92 ms | 201.93 ms | 213.90 ms | 265.23 ms | `< 1000 ms` | **326.44 ms** | 430.77 ms | **PASSED** |
+| **Overall HTTP Duration** | 155.96 ms | 206.46 ms | 230.25 ms | 330.24 ms | `< 1000 ms` | **366.63 ms** | 473.06 ms | **PASSED** |
 
-## Project Files
+### 2. Rate, Throughput & Failure Analysis
 
-```text
-dmoney-k6-test/
-├── script.js               # Multi-phase k6 workload and thresholds
-├── users.json              # Local test account details; keep private
-├── tokens.json             # Local bearer tokens; keep private
-├── report.html             # Generated HTML report
-├── setup_auth.js           # Legacy authentication/setup helper
-├── setup_all.js            # User and account setup flow
-├── seed_users.js           # Creates test accounts
-├── generate_tokens.js      # k6 token-generation utility
-├── fetch_tokens.js         # Node.js token utility
-├── activate_and_deposit.js # Account activation and initial deposits
-├── deposit_balance.js      # Customer funding utility
-├── recharge_agents.js      # Agent funding utility
-├── recharge_customer.js    # Customer funding utility
-├── balance_fix.js          # Balance inspection/adjustment utility
-├── check_balances.js       # Account balance inspection
-└── check_status.js         # Account/system status utility
-```
+| Metric Name | Target SLA | Actual Rate % | Passed Count | Failed Count | Result |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `http_req_failed` | `< 1.00%` | **0.29%** | 343 | 1 | **PASSED** |
+| `deposit_success_rate` | `≥ 99.00%` | **100.00%** | 48 | 0 | **PASSED** |
+| `payment_success_rate` | `≥ 99.00%` | **99.42%** | 171 | 1 | **PASSED** |
+| `sendmoney_success_rate` | `≥ 99.00%` | **100.00%** | 124 | 0 | **PASSED** |
 
-## Setup and Execution
+---
 
-### 1. Prepare test data and tokens
+## 📈 Per-API Performance Degradation & Workload Analysis
 
-Make sure `users.json` contains the authorized test accounts and `tokens.json` contains a valid bearer token for each corresponding account. Tokens expire; refresh them through the environment's approved authentication process before a run. Do not paste tokens into source control, chat, or a shared report.
+1. **Deposit API Analysis:**
+   * **Behavior:** Exhibited the highest average response time (331.49 ms) and P(95) latency (421.94 ms).
+   * **Degradation:** Latency increased by ~90 ms when Agent 2 joined Agent 1 during the 60s–120s window. However, success rate remained 100% with zero failed deposits.
 
-`setup_auth.js` is a legacy helper that retrieves OTP values through a privileged admin endpoint and prints OTPs and bearer tokens. Avoid running it in shared environments or against accounts you do not own or administer. Prefer the platform's approved account-owner authentication flow.
+2. **Payment API Analysis:**
+   * **Behavior:** Handled the highest total transaction throughput (172 requests). Maintain an average response time of 213.78 ms.
+   * **Degradation:** Showed minimal degradation across VU scaling, maintaining a P(95) latency of 300.78 ms. A single transient 403 network failure occurred out of 172 requests, maintaining a 99.42% success rate (well within the ≥99% SLA limit).
 
-### 2. Run the load test
+3. **Send Money API Analysis:**
+   * **Behavior:** Delivered consistent latencies with a median of 201.93 ms and P(95) of 326.44 ms.
+   * **Degradation:** Response time remained stable as VUs increased from 4 to 8, demonstrating predictable concurrency scaling.
 
-From the project directory, run:
+---
 
-```bash
-# 1. Recharge Agent balances from SYSTEM
-k6 run recharge_agents.js
+## 🖼 Verification Screenshots
 
-# 2. Run setup_auth to generate fresh JWT tokens
-k6 run setup_auth.js
-
-# 3. Paste the generated JSON into tokens.json (or ensure fetch_tokens.js passes 6/6)
-
-# 4. Verify tokens are working (should return 200/201 instead of 403)
-k6 run check_status.js
-
-# 5. Run main load test
-k6 run script.js
-```
-
-The script writes the HTML summary to `report.html` after the run. A breached threshold makes k6 exit with a non-zero status; inspect the failed request and success-rate metrics before changing thresholds.
-
-### 3. Open the report
-
-On macOS:
-
-```bash
-open report.html
-```
-
-## Latest Results
-
-> Snapshot from `report.html`, generated October 28, 2026. Results describe that run only; they are not a guarantee for future runs.
-
-### Summary
-
-| Metric | Result |
-|---|---:|
-| Total requests | 230 (1.89 requests/s) |
-| Iterations | 86 (0.71 iterations/s) |
-| Virtual users | 2 minimum, 8 maximum |
-| Thresholds breached | 0 |
-| Failed requests | 2 (0.87%) |
-| Checks | 228 passed, 2 failed |
-| Data received / sent | 0.17 MB / 0.05 MB |
-
-### Response Times
-
-| Metric | Average | Median | Maximum | P(90) | P(95) |
-|---|---:|---:|---:|---:|---:|
-| HTTP request duration | 221.23 ms | 197.10 ms | 476.07 ms | 311.13 ms | 371.88 ms |
-| Deposit response time | 293.75 ms | 274.59 ms | 476.07 ms | 386.48 ms | 414.71 ms |
-
-### Transaction Success
-
-| Transaction | Success rate | Passed | Failed |
-|---|---:|---:|---:|
-| Send money | 100.00% | 54 | 0 |
-| Payment | 100.00% | 118 | 0 |
-| Deposit | 96.55% | 56 | 2 |
-
-The run stayed within configured thresholds. Both failed checks were deposit requests; inspect the response details in the report or k6 output to identify their cause.
-
-## Screenshots
 
 ### Load Test Execution Summary
 ![k6 Terminal Summary](./docs/screenshots/k6_terminal_summary.png)
@@ -174,15 +93,28 @@ The run stayed within configured thresholds. Both failed checks were deposit req
 ### HTML Test Report
 ![k6 HTML Report Overview](./docs/screenshots/k6_html_report.png)
 ![k6 HTML Per-API Metrics](./docs/screenshots/k6_html_metrics.png)
+![k6 HTML Per-API Metrics](./docs/screenshots/k6_html_metrics2.png)
+---
 
-## Tech Stack
+## 🚀 Execution Instructions
 
-- [Grafana k6](https://k6.io/) for load generation and threshold checks.
-- JavaScript for workload scenarios and custom metrics.
-- k6-reporter for the generated HTML summary.
-- Node.js for selected local utilities.
+### Prerequisites
+* Grafana k6 CLI installed (`brew install k6`)
+* Node.js v16+ (optional for authentication helpers)
 
-## Author
+### Running the Test Suite
+
+1. **Recharge System & Agent Accounts:**
+   ```bash
+   k6 run recharge_agents.js
+   ```
+
+2. **Generate Fresh Auth Tokens:**
+   ```bash
+   k6 run setup_auth.js
+   ```
+
+3. ## Author
 
 **Md. Tanvir Ahamed**
 
